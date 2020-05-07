@@ -7,7 +7,7 @@
     "morgan": "^1.9.1"
   },
   "scripts": {
-    "start": "nodemon --ext js --watch src --abort-on-uncaught-exception"
+    "start": "nodemon --ext js"
   },
   "devDependencies": {
     "nodemon": "^2.0.2"

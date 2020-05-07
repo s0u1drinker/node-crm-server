@@ -3,20 +3,29 @@ const cors = require('cors')
 const morgan = require('morgan')
 const mongoose = require('mongoose')
 
-const port = require('./config/config').port
-const routes = require('./config/routes')
+// Забираем необходимые данные из конфигурационного файла
+const { port, db } = require('./config/settings')
+
+// Подключаем маршруты
+const indexRouter = require('./routes/index')
+const authRouter = require('./routes/auth')
 
 const app = express()
 
 app.use(morgan('combined'))
 app.use(express.json())
 app.use(cors())
-app.use(routes)
 
-mongoose.connect('mongodb://localhost:27017/test', {useNewUrlParser: true})
-  .then(db => console.log('[OK] DB is connected.'))
+// Описываем маршруты
+app.use('/', indexRouter)
+app.use('/auth', authRouter)
+
+// Подключаемся к БД
+mongoose.connect(db('localhost', 27017, 'crm'), {useNewUrlParser: true})
+  .then(db => console.log('[OK] Соединение с БД установлено.'))
   .catch(err => console.error(err))
 
+// Просим сервер обратить свой взор на порт
 app.listen(port, () => {
-  console.log(`[OK] Server listening ${port}...`)
+  console.log(`[OK] Сервер пробудился и обратил свой взор на порт ${port}.`)
 })
