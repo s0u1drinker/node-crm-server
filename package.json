@@ -1,13 +1,15 @@
 {
   "dependencies": {
     "activedirectory": "^0.7.2",
+    "connect-mongo": "^3.2.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "express-session": "^1.17.1",
     "mongoose": "^5.8.11",
     "morgan": "^1.9.1"
   },
   "scripts": {
-    "start": "nodemon --ext js"
+    "start": "nodemon server.js --ext js"
   },
   "devDependencies": {
     "nodemon": "^2.0.2"
