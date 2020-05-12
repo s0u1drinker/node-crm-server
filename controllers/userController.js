@@ -1,24 +1,37 @@
-const User = require('../models/userModel')
 const ActiveDirectory = require('activedirectory')
 
-const config = require('./../config/ldap')
-const ad = new ActiveDirectory(config.ldap)
-
 exports.auth = function(req, res) {
-  const login = req.body.name
-  const pass = req.body.pass
+  const config = require('./../config/ldap')
   const response = {
     err: false,
-    auth: false,
-    descr: ''
+    auth: false
   }
 
+  // Добавляем логин и пароль в конфиг
+  config.ldap.sAMAccountName = req.body.login
+  config.ldap.bindDN = req.body.login + config.domainName
+  config.ldap.bindCredentials = req.body.pass
+
+  // Запускаем библиотеку для работы с AD
+  const ad = new ActiveDirectory(config.ldap)
+  
+  // Promise с аутентификацией
   new Promise ((resolve, reject) => {
-    if(login && pass) {
+    if(config.ldap.bindDN && config.ldap.bindCredentials) {
       // Аутентификация в Active Directory
-      ad.authenticate(`${login}@${config.domainName}.${config.domainNameExt}`, pass, function(err, auth) {
+      ad.authenticate(config.ldap.bindDN, config.ldap.bindCredentials, function(err, auth) {
         if(auth){
-          resolve(true)
+          // Поиск информации о пользователе в AD
+          ad.findUser(config.ldap.sAMAccountName, function(err, user) {
+            if(err) {
+              reject('Непредвиденная ошибка')
+            }
+            if(!user) {
+              reject('Информация о пользователе не найдена')
+            } else {
+              resolve(user)
+            }
+          })
         } else {
           // Сообщение об ошибке
           let errMessage = err.lde_message
@@ -55,13 +68,25 @@ exports.auth = function(req, res) {
     } else {
       reject('Не указан логин или пароль')
     }
-  }).then(result => {
-    req.session.user = {id: login}
+  }).then(user => {
+    req.session.user = {id: user.sAMAccountName}
     response.auth = true
+    response.username = user.displayName
   }).catch(err => {
     response.err = true
     response.descr = err
   }).finally(() => {
     res.json(response)
   })
+}
+
+exports.logout = function (req, res) {
+  delete req.session.user
+  // TODO:
+  // 1. Remove session from DB;
+  // 2. Clear cookie.
+}
+
+exports.user = function (req, res) {
+  res.send('User page')
 }

@@ -10,7 +10,7 @@ const { port, db } = require('./config/settings')
 
 // Подключаем маршруты
 const indexRouter = require('./routes/index')
-const authRouter = require('./routes/auth')
+const userRouter = require('./routes/user')
 
 // Создаем объект приложения
 const app = express()
@@ -18,9 +18,8 @@ const app = express()
 // Middlewares
 app.use(session({
   secret: 'There is only war...',
-  resave: false,
+  resave: true,
   saveUninitialized: false,
-  cookie: { secure: true },
   store: new MongoStore({
     url: db('localhost', 27017, 'crm')
   })
@@ -31,10 +30,10 @@ app.use(cors())
 
 // Описываем маршруты
 app.use('/', indexRouter)
-app.use('/auth', authRouter)
+app.use('/user', userRouter)
 
 // Подключаемся к БД
-mongoose.connect(db('localhost', 27017, 'crm'), {useNewUrlParser: true})
+mongoose.connect(db('localhost', 27017, 'crm'), {useNewUrlParser: true, useUnifiedTopology: true})
   .then(db => console.log('[OK] Соединение с БД установлено.'))
   .catch(err => console.error(err))
 
