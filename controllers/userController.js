@@ -1,7 +1,7 @@
 const ActiveDirectory = require('activedirectory')
+const config = require('./../config/ldap')
 
 exports.auth = function(req, res) {
-  const config = require('./../config/ldap')
   const response = {
     err: false,
     auth: false
@@ -81,10 +81,50 @@ exports.auth = function(req, res) {
 }
 
 exports.logout = function (req, res) {
-  delete req.session.user
-  // TODO:
-  // 1. Remove session from DB;
-  // 2. Clear cookie.
+  const response = {
+    err: false
+  }
+
+  req.session.destroy((err) => {
+    response.err = true
+    response.descr = err
+  })
+  res.clearCookie('crm-sid')
+  res.send(response)
+}
+
+exports.check = function(req, res) {
+  const response = {
+    err: false
+  }
+
+  if(req.session.user) {
+    const ad = new ActiveDirectory(config.ldap)
+
+    new Promise((resolve, reject) => {
+      ad.findUser(req.session.user.id, function(err, user) {
+        if(err) {
+          reject(err)
+        }
+        if(!user) {
+          reject('Информация о пользователе не найдена')
+        } else {
+          resolve(user)
+        }
+      })
+    }).then(user => {
+      response.auth = true
+      response.username = user.displayName
+    }).catch(err => {
+      response.err = true
+      response.descr = err
+    }).finally(() => {
+      res.json(response)
+    })
+  } else {
+    response.auth = false
+    res.json(response)
+  }
 }
 
 exports.user = function (req, res) {
