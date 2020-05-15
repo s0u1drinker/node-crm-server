@@ -21,6 +21,9 @@ app.use(session({
   key: settings.session.key,
   resave: false,
   saveUninitialized: false,
+  cookie: {
+    sameSite: 'lax'
+  },
   store: new MongoStore({mongooseConnection: mongoose.connection})
 }))
 app.use(morgan('combined'))
