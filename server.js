@@ -11,6 +11,7 @@ const settings = require('./config/settings')
 // Подключаем маршруты
 const indexRouter = require('./routes/index')
 const userRouter = require('./routes/user')
+const phonebookRouter = require('./routes/phonebook')
 
 // Создаем объект приложения
 const app = express()
@@ -36,6 +37,7 @@ app.use(cors({
 // Описываем маршруты
 app.use('/', indexRouter)
 app.use('/user', userRouter)
+app.use('/phonebook', phonebookRouter)
 
 // Подключаемся к БД
 mongoose.connect(settings.db('localhost', 27017, 'crm'), {useNewUrlParser: true, useUnifiedTopology: true})
