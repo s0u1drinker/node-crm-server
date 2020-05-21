@@ -4,9 +4,14 @@ const MongoStore = require('connect-mongo')(session)
 const cors = require('cors')
 const morgan = require('morgan')
 const mongoose = require('mongoose')
+const ActiveDirectory = require('activedirectory')
 
 // Забираем необходимые данные из конфигурационного файла
 const settings = require('./config/settings')
+const configLDAP = require('./config/ldap')
+
+// Инициализируем подключение к Active Directory
+const ad = new ActiveDirectory(configLDAP.ldap)
 
 // Подключаем маршруты
 const indexRouter = require('./routes/index')
@@ -41,10 +46,15 @@ app.use('/phonebook', phonebookRouter)
 
 // Подключаемся к БД
 mongoose.connect(settings.db('localhost', 27017, 'crm'), {useNewUrlParser: true, useUnifiedTopology: true})
-  .then(db => console.log('[OK] Соединение с БД установлено.'))
-  .catch(err => console.error(err))
+  .then(() => console.log('[OK] Соединение с БД установлено.'))
+  .catch(err => console.log(`[ERROR] БД недоступна: ${err.message}. Вызывайте техножрецов!`))
 
-// Просим сервер обратить свой взор на порт
+// Проверка доступности LDAP
+ad.userExists(configLDAP.testUser(), (err) => {
+  console.log((err.code === 'ETIMEDOUT') ? '[ERROR] Сервер LDAP недоступен. Вызывайте техножрецов!' : '[ОК] Сервер LDAP доступен.')
+})
+
+// Пробуждаем сервер
 app.listen(settings.port, () => {
   console.log(`[OK] Дух машины пробудился и обратил свой взор на порт ${settings.port}.`)
 })
