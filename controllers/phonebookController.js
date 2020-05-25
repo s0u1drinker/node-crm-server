@@ -6,11 +6,23 @@ exports.get = async function(req, res) {
     {
       $lookup: {
         from: Phonebook.collection.name,
-        localField: "_id",
-        foreignField: "id_department",
+        let: { order_item: "$_id" },
+        pipeline: [
+          { $match:
+            { $expr:
+              { $and:
+                { $eq: ["$id_department", "$$order_item"] }
+              }
+            }
+          },
+          {
+            $sort: { order: 1 }
+          }
+        ],
         as: "cabinets"
       }
-    }
+    },
+    { $sort: { order: 1 } }
   ]).exec()
 
   res.json(phonebook)
