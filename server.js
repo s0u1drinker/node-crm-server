@@ -17,6 +17,7 @@ const ad = new ActiveDirectory(configLDAP.ldap)
 const indexRouter = require('./routes/index')
 const userRouter = require('./routes/user')
 const phonebookRouter = require('./routes/phonebook')
+const eventRouter = require('./routes/events')
 
 // Создаем объект приложения
 const app = express()
@@ -43,6 +44,7 @@ app.use(cors({
 app.use('/', indexRouter)
 app.use('/user', userRouter)
 app.use('/phonebook', phonebookRouter)
+app.use('/events', eventRouter)
 
 // Подключаемся к БД
 mongoose.connect(settings.db('localhost', 27017, 'crm'), {useNewUrlParser: true, useUnifiedTopology: true})
