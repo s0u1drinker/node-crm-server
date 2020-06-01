@@ -5,22 +5,25 @@ const documentSchema = new Schema({
     type: String
   },
   doc_owner: {
-    type: Object
+    type: String
   },
   doc_number: {
     type: String
   },
   doc_type: {
-    type: Object
+    type: String
   },
   doc_date: {
     type: String
   },
   doc_name: {
     type: String
+  },
+  views: {
+    type: Number
   }
 }, {
   versionKey: false
 })
 
-module.exports = model('Documents', documentSchema)
+module.exports = model('Document', documentSchema)

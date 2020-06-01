@@ -1,11 +1,20 @@
 const {Schema, model} = require('mongoose')
 
 const documentOwnerSchema = new Schema({
-  name: {
+  fullname: {
+    type: String
+  },
+  attr: {
+    type: String
+  },
+  declension: {
+    type: String
+  },
+  translit_owner_declension: {
     type: String
   }
 }, {
   versionKey: false
 })
 
-module.exports = model('DocumentOwner', documentOwnerSchema)
+module.exports = model('DocumentOwner', documentOwnerSchema, 'documents_owners')
