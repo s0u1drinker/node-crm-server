@@ -113,3 +113,7 @@ exports.getDocumentsForMainPage = async function (req, res) {
 
   res.json(response)
 }
+
+exports.updateViewsCountOfDocument = async function (req, res) {
+  await Document.updateOne({_id: req.body.id}, {$inc: {'views': 1}})
+}
