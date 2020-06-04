@@ -1,5 +1,7 @@
 const Positions = require('../models/positionModel')
 
 exports.getPositions = async function (req, res) {
-  res.json('No positions found.')
+  const response = await Positions.find({}).sort({ name: 1 })
+
+  res.json(response)
 }

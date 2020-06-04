@@ -4,7 +4,7 @@ const position_controller = require('./../controllers/positionController')
 
 const router = express.Router()
 
-router.get('/getDepartments', department_controller.getDepartments)
+router.get('/getDepartmentsForRegistration', department_controller.getDepartmentsForRegistration)
 router.get('/getPositions', position_controller.getPositions)
 
 module.exports = router
