@@ -1,4 +1,5 @@
 const ActiveDirectory = require('activedirectory')
+const Log = require('../models/logModel')
 const config = require('./../config/ldap')
 
 exports.auth = function(req, res) {
@@ -69,9 +70,17 @@ exports.auth = function(req, res) {
       reject('Не указан логин или пароль')
     }
   }).then(user => {
-    req.session.user = {id: user.sAMAccountName}
+    const log = new Log({
+      user: user.sAMAccountName,
+      date: new Date(),
+      event: '5edf1e9cabcdcc056c78b943',
+      text: `Пользователь <${user.displayName}> успешно авторизовался.`
+    })
+
+    req.session.user = {id: user.sAMAccountName, displayName: user.displayName}
     response.auth = true
     response.username = user.displayName
+    log.save()
   }).catch(err => {
     response.err = true
     response.descr = err
@@ -84,12 +93,19 @@ exports.logout = function (req, res) {
   const response = {
     err: false
   }
+  const log = new Log({
+    user: req.session.user.id,
+    date: new Date(),
+    event: '5edf1eb6abcdcc056c78b944',
+    text: `Пользователь <${req.session.user.displayName}> вышел из системы.`
+  })
 
   req.session.destroy((err) => {
     response.err = true
     response.descr = err
   })
   res.clearCookie('crm-sid')
+  log.save()
   res.send(response)
 }
 
