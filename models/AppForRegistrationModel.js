@@ -21,9 +21,6 @@ const appForRegistrationSchema = new Schema({
   },
   tasks: {
     type: [ObjectId]
-  },
-  otherTasks: {
-    type: String
   }
 }, {
   versionKey: false

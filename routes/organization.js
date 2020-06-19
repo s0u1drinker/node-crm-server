@@ -6,7 +6,7 @@ const app_for_reg_controller = require('./../controllers/appForRegistrationContr
 
 const router = express.Router()
 
-router.get('/getDepartmentsForRegistration', department_controller.getDepartmentsForRegistration)
+router.get('/getDataForRegistration', department_controller.getDataForRegistration)
 router.get('/getPositions', position_controller.getPositions)
 router.get('/getRegistrationTasks', reg_tasks_controller.getRegistrationTasks)
 router.post('/addNewApplicationForRegistration', app_for_reg_controller.addNewApplicationForRegistration)

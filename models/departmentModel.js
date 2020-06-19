@@ -1,17 +1,17 @@
 const {Schema, model} = require('mongoose')
 
-const phonebookSchema = new Schema({
-  name: {
-    type: String
+const departmentSchema = new Schema({
+  name: String,
+  order: Number,
+  abbr: String,
+  regForm: String,
+  head: {
+    position: String,
+    name: String
   },
-  order: {
-    type: Number
-  },
-  abbr: {
-    type: String
-  }
+  positions: Array
 }, {
   versionKey: false
 })
 
-module.exports = model('Departments', phonebookSchema)
+module.exports = model('Departments', departmentSchema)
