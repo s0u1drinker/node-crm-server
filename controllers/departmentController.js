@@ -48,7 +48,9 @@ exports.getDataForRegistration = async function (req, res) {
       $group: {
         _id: {
           id: "$_id",
-          name: "$name"
+          name: "$name",
+          head: "$head",
+          abbr: "$abbr"
         },
         positions: {
           $push: "$positions"
