@@ -4,7 +4,7 @@ const documentOwnerSchema = new Schema({
   fullname: {
     type: String
   },
-  attr: {
+  abbr: {
     type: String
   },
   declension: {
