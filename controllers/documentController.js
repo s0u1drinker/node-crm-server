@@ -119,12 +119,8 @@ exports.getDocumentsByText = async function (req, res) {
   const skip = (req.body.skip) ? req.body.skip * limit : 0
   const text = req.body.text.split(' ').join('|')
   const regExp = new RegExp(`${text}`, 'i')
-  const documents = {
-    count: 0,
-    data: []
-  }
 
-  documents.data = await Document.aggregate([
+  const documents = await Document.aggregate([
     {
       $lookup: {
         from: DocumentOwner.collection.name,
@@ -167,14 +163,12 @@ exports.getDocumentsByText = async function (req, res) {
       }
     },
     {
-      $skip: skip
-    },
-    {
-      $limit: limit
+      $facet: {
+        list: [{ $skip: skip }, { $limit: limit }],
+        total: [ { $count: 'cnt' } ]
+      }
     }
   ])
-
-  documents.count = documents.data.length
 
   res.json(documents)
 }
