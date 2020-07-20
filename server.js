@@ -22,6 +22,7 @@ const advertRouter = require('./routes/adverts')
 const documentRouter = require('./routes/documents')
 const organizationRouter = require('./routes/organization')
 const logRouter = require('./routes/log')
+const moduleRouter = require('./routes/modules')
 
 // Создаем объект приложения
 const app = express()
@@ -53,6 +54,7 @@ app.use('/adverts', advertRouter)
 app.use('/documents', documentRouter)
 app.use('/organization', organizationRouter)
 app.use('/log', logRouter)
+app.use('/modules', moduleRouter)
 
 // Подключаемся к БД
 mongoose.connect(settings.db('localhost', 27017, 'crm'), {useNewUrlParser: true, useUnifiedTopology: true})

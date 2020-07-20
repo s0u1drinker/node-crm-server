@@ -1,86 +1,136 @@
 const ActiveDirectory = require('activedirectory')
+
 const Log = require('../models/logModel')
+const Module = require('../models/moduleModel')
+
 const config = require('./../config/ldap')
 
-exports.auth = function(req, res) {
+exports.login = function(req, res) {
   const response = {
     err: false,
     auth: false
   }
-
-  // Добавляем логин и пароль в конфиг
-  config.ldap.sAMAccountName = req.body.login
-  config.ldap.bindDN = req.body.login + config.domainName
-  config.ldap.bindCredentials = req.body.pass
-
-  // Запускаем библиотеку для работы с AD
-  const ad = new ActiveDirectory(config.ldap)
   
-  // Promise с аутентификацией
+  let sAMAccountName = false
+
+  if (!req.body.checkUser) {
+    // Добавляем логин и пароль в конфиг
+    config.ldap.bindDN = req.body.login + config.domainName
+    config.ldap.bindCredentials = req.body.pass
+    sAMAccountName = req.body.login
+  } else {
+    if (req.session.user) {
+      sAMAccountName = req.session.user.id
+    }
+  }
+  
   new Promise ((resolve, reject) => {
-    if(config.ldap.bindDN && config.ldap.bindCredentials) {
-      // Аутентификация в Active Directory
-      ad.authenticate(config.ldap.bindDN, config.ldap.bindCredentials, function(err, auth) {
-        if(auth){
-          // Поиск информации о пользователе в AD
-          ad.findUser(config.ldap.sAMAccountName, function(err, user) {
-            if(err) {
-              reject('Непредвиденная ошибка')
-            }
-            if(!user) {
-              reject('Информация о пользователе не найдена')
-            } else {
-              resolve(user)
+    if (sAMAccountName) {
+      // Запускаем библиотеку для работы с AD
+      const ad = new ActiveDirectory(config.ldap)
+
+      if (!req.body.checkUser) {
+        // Проверяем наличие логина и пароля
+        if(config.ldap.bindDN && config.ldap.bindCredentials) {
+          // Аутентификация в Active Directory
+          ad.authenticate(config.ldap.bindDN, config.ldap.bindCredentials, function(err, auth) {
+            if (!auth) {
+              // Сообщение об ошибке
+              let errMessage = err.lde_message
+              let errCode = ''
+              let errText = ''
+
+              // "Вытаскиваем" код ошибки
+              errCode = errMessage.slice(errMessage.indexOf('data')).split(',')[0].split(' ')[1]
+              
+              // Расшифровываем наиболее распространенные коды ошибок.
+              // Подробно об ошибках авторизации в LDAP можно почитать тут:
+              // https://docs.servicenow.com/bundle/jakarta-platform-administration/page/administer/reference-pages/reference/r_LDAPErrorCodes.html?title=LDAP_Error_Codes#gsc.tab=0
+              switch (errCode) {
+                case '52e':
+                  errText = 'Логин или пароль указаны неверно'
+                  break
+                case '532':
+                  errText = 'Срок действия пароля истек'
+                  break
+                case '533':
+                  errText = 'Учетная запись заблокирована'
+                  break
+                case '773':
+                  errText = 'Необходимо сменить пароль'
+                  break
+                default:
+                  errText = 'Непредвиденная ошибка'
+                  break
+              }
+
+              reject(errText)
             }
           })
         } else {
-          // Сообщение об ошибке
-          let errMessage = err.lde_message
-          let errCode = ''
-          let errText = ''
+          reject('Не указан логин или пароль')
+        }
+      }
 
-          // "Вытаскиваем" код ошибки
-          errCode = errMessage.slice(errMessage.indexOf('data')).split(',')[0].split(' ')[1]
-          
-          // Расшифровываем наиболее распространенные коды ошибок.
-          // Подробно об ошибках авторизации в LDAP можно почитать тут:
-          // https://docs.servicenow.com/bundle/jakarta-platform-administration/page/administer/reference-pages/reference/r_LDAPErrorCodes.html?title=LDAP_Error_Codes#gsc.tab=0
-          switch (errCode) {
-            case '52e':
-              errText = 'Логин или пароль указаны неверно'
-              break
-            case '532':
-              errText = 'Срок действия пароля истек'
-              break
-            case '533':
-              errText = 'Учетная запись заблокирована'
-              break
-            case '773':
-              errText = 'Необходимо сменить пароль'
-              break
-            default:
-              errText = 'Непредвиденная ошибка'
-              break
-          }
+      ad.findUser(sAMAccountName, function(err, user) {
+        if(err) {
+          reject('Непредвиденная ошибка рпи поиске пользователя')
+        }
+        if(!user) {
+          reject('Информация о пользователе не найдена')
+        } else {
+          // Забираем список групп пользователя
+          ad.getGroupMembershipForUser(user.sAMAccountName, async function (err, groups) {
+            if (err) {
+              reject('Непредвиденная ошибка с поиском групп пользователя')
+            }
 
-          reject(errText)
+            if (groups) {
+              user.groups = groups.map((item) => { return item.cn })
+
+              // Вытаскиваем из БД список модулей по группам пользователя
+              user.modules = await Module.find({
+                $or: [
+                  {
+                    groups: {
+                      $in: user.groups
+                    }
+                  }
+                ]
+              },
+              {
+                groups: 0,
+                _id: 0
+              })
+            }
+
+            resolve(user)
+          })
         }
       })
     } else {
-      reject('Не указан логин или пароль')
+      res.json(response)
     }
   }).then(user => {
-    const log = new Log({
-      user: user.sAMAccountName,
-      date: new Date(),
-      event: '5edf1e9cabcdcc056c78b943',
-      text: `Пользователь <${user.displayName}> успешно авторизовался.`
-    })
+    if (!req.body.checkUser) {
+      // Экземпляр логирования авторизации пользователя
+      const log = new Log({
+        user: user.sAMAccountName,
+        date: new Date(),
+        event: '5edf1e9cabcdcc056c78b943',
+        text: `Пользователь <${user.displayName}> успешно авторизовался.`
+      })
 
-    req.session.user = {id: user.sAMAccountName, displayName: user.displayName}
+      // Добавляем в сессию информацию о пользователе
+      req.session.user = {id: user.sAMAccountName, displayName: user.displayName}
+
+      // Сохраняем лог
+      log.save()
+    }
+
     response.auth = true
     response.username = user.displayName
-    log.save()
+    response.modules = user.modules
   }).catch(err => {
     response.err = true
     response.descr = err
@@ -107,40 +157,6 @@ exports.logout = function (req, res) {
   res.clearCookie('crm-sid')
   log.save()
   res.send(response)
-}
-
-exports.check = function(req, res) {
-  const response = {
-    err: false
-  }
-
-  if(req.session.user) {
-    const ad = new ActiveDirectory(config.ldap)
-
-    new Promise((resolve, reject) => {
-      ad.findUser(req.session.user.id, function(err, user) {
-        if(err) {
-          reject(err)
-        }
-        if(!user) {
-          reject('Информация о пользователе не найдена')
-        } else {
-          resolve(user)
-        }
-      })
-    }).then(user => {
-      response.auth = true
-      response.username = user.displayName
-    }).catch(err => {
-      response.err = true
-      response.descr = err
-    }).finally(() => {
-      res.json(response)
-    })
-  } else {
-    response.auth = false
-    res.json(response)
-  }
 }
 
 exports.user = function (req, res) {
