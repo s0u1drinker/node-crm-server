@@ -15,6 +15,9 @@ const moduleSchema = new Schema({
   },
   groups: {
     type: Array
+  },
+  users: {
+    type: Array
   }
 }, {
   versionKey: false
