@@ -23,6 +23,7 @@ const documentRouter = require('./routes/documents')
 const organizationRouter = require('./routes/organization')
 const logRouter = require('./routes/log')
 const moduleRouter = require('./routes/modules')
+const videoRouter = require('./routes/video')
 
 // Создаем объект приложения
 const app = express()
@@ -55,6 +56,9 @@ app.use('/documents', documentRouter)
 app.use('/organization', organizationRouter)
 app.use('/log', logRouter)
 app.use('/modules', moduleRouter)
+app.use('/videos', videoRouter)
+// Статические файлы
+app.use('/files', express.static(__dirname + '/files'));
 
 // Подключаемся к БД
 mongoose.connect(settings.db('localhost', 27017, 'crm'), {useNewUrlParser: true, useUnifiedTopology: true})
