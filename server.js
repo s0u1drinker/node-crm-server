@@ -24,6 +24,7 @@ const organizationRouter = require('./routes/organization')
 const logRouter = require('./routes/log')
 const moduleRouter = require('./routes/modules')
 const videoRouter = require('./routes/video')
+const depRouter = require('./routes/deps')
 
 // Создаем объект приложения
 const app = express()
@@ -57,6 +58,7 @@ app.use('/organization', organizationRouter)
 app.use('/log', logRouter)
 app.use('/modules', moduleRouter)
 app.use('/videos', videoRouter)
+app.use('/deps', depRouter)
 // Статические файлы
 app.use('/files', express.static(__dirname + '/files'));
 
