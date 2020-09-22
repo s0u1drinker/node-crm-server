@@ -8,6 +8,9 @@
     "mongoose": "^5.8.11",
     "morgan": "^1.9.1"
   },
+  "resolutions": {
+    "activedirectory/ldapjs": "1.0.2"
+  },
   "scripts": {
     "start": "nodemon server.js --ext js"
   },
