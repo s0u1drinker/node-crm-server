@@ -25,6 +25,7 @@ const logRouter = require('./routes/log')
 const moduleRouter = require('./routes/modules')
 const videoRouter = require('./routes/video')
 const depRouter = require('./routes/deps')
+const DocManagementRouter = require('./routes/docManagement')
 
 // Создаем объект приложения
 const app = express()
@@ -59,20 +60,21 @@ app.use('/log', logRouter)
 app.use('/modules', moduleRouter)
 app.use('/videos', videoRouter)
 app.use('/deps', depRouter)
+app.use('/doc-management', DocManagementRouter)
 // Статические файлы
 app.use('/files', express.static(__dirname + '/files'));
 
 // Подключаемся к БД
 mongoose.connect(settings.db('localhost', 27017, 'crm'), {useNewUrlParser: true, useUnifiedTopology: true})
-  .then(() => console.log('[OK] Соединение с БД установлено.'))
-  .catch(err => console.log(`[ERROR] БД недоступна: ${err.message}. Вызывайте техножрецов!`))
+  .then(() => console.log('\x1b[32m[OK]\x1b[0m Соединение с БД установлено.'))
+  .catch(err => console.log(`\x1b[31m[ERROR]\x1b[0m БД недоступна: ${err.message}. Вызывайте техножрецов!`))
 
 // Проверка доступности LDAP
 ad.userExists(configLDAP.testUser(), (err) => {
-  console.log((err.code === 'ETIMEDOUT') ? '[ERROR] Сервер LDAP недоступен. Вызывайте техножрецов!' : '[ОК] Сервер LDAP доступен.')
+  console.log((err.code === 'ETIMEDOUT') ? '\x1b[31m[ERROR]\x1b[0m Сервер LDAP недоступен. Вызывайте техножрецов!' : '\x1b[32m[OK]\x1b[0m Сервер LDAP доступен.')
 })
 
 // Пробуждаем сервер
 app.listen(settings.port, () => {
-  console.log(`[OK] Дух машины пробудился и обратил свой взор на порт ${settings.port}.`)
+  console.log(`\x1b[32m[OK]\x1b[0m Дух машины пробудился и обратил свой взор на порт ${settings.port}.`)
 })
